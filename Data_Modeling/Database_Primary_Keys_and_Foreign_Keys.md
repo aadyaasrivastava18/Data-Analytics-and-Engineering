@@ -266,7 +266,7 @@ This reduces redundancy and keeps customer information consistent.
 
 ---
 
-## Business Example (Google Ads)
+## Business Example
 
 ### Advertiser Table
 
