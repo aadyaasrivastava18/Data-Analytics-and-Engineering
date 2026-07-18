@@ -1,0 +1,421 @@
+# SQL Window Functions - Interview Notes
+
+> A concise guide to SQL Window Functions for Data Analyst, Product Analyst, Business Analyst, and MAANG interviews.
+
+---
+
+# What is a Window Function?
+
+A window function performs calculations across a set of rows while **preserving every individual row**.
+
+Unlike `GROUP BY`, window functions **do not collapse rows**.
+
+---
+
+# General Syntax
+
+```sql
+FUNCTION(column)
+OVER (
+    PARTITION BY column
+    ORDER BY column
+)
+```
+
+---
+
+# SQL Execution Order
+
+Understanding execution order explains why window functions often require subqueries.
+
+```
+FROM
+WHERE
+GROUP BY
+HAVING
+WINDOW FUNCTIONS
+SELECT
+ORDER BY
+```
+
+Since `WHERE` executes before window functions, you **cannot filter directly on a window function result**.
+
+---
+
+# PARTITION BY
+
+Think of `PARTITION BY` as creating virtual groups.
+
+Example:
+
+```sql
+AVG(salary)
+OVER(PARTITION BY department)
+```
+
+Calculates the average salary **within each department** while keeping every employee row.
+
+---
+
+# ORDER BY Inside OVER()
+
+`ORDER BY` inside `OVER()` determines the sequence of calculation.
+
+Example:
+
+```sql
+SUM(amount)
+OVER(
+    PARTITION BY customer
+    ORDER BY order_date
+)
+```
+
+Creates a running total.
+
+Without `ORDER BY`, the total is repeated for every row.
+
+---
+
+# Aggregate Window Functions
+
+## Average
+
+```sql
+AVG(salary)
+OVER(PARTITION BY department)
+```
+
+---
+
+## Sum
+
+```sql
+SUM(salary)
+OVER(PARTITION BY department)
+```
+
+---
+
+## Maximum
+
+```sql
+MAX(salary)
+OVER(PARTITION BY department)
+```
+
+---
+
+## Minimum
+
+```sql
+MIN(salary)
+OVER(PARTITION BY department)
+```
+
+---
+
+# Ranking Functions
+
+## ROW_NUMBER()
+
+Assigns a unique number to every row.
+
+```sql
+ROW_NUMBER()
+OVER(
+PARTITION BY department
+ORDER BY salary DESC
+)
+```
+
+Example:
+
+| Salary | Row Number |
+|---------|-----------:|
+|100|1|
+|90|2|
+|90|3|
+|80|4|
+
+Use when you need exactly one row.
+
+Example:
+- Latest order
+- First login
+- Top employee (single)
+
+---
+
+## RANK()
+
+Assigns the same rank to ties.
+
+Leaves gaps.
+
+Example:
+
+| Salary | Rank |
+|---------|-----:|
+|100|1|
+|90|2|
+|90|2|
+|80|4|
+
+Use when ties should share the same rank.
+
+---
+
+## DENSE_RANK()
+
+Assigns the same rank to ties.
+
+Does NOT leave gaps.
+
+Example:
+
+| Salary | Dense Rank |
+|---------|-----------:|
+|100|1|
+|90|2|
+|90|2|
+|80|3|
+
+Use when working with distinct rankings.
+
+---
+
+# LAG()
+
+Returns the previous row.
+
+```sql
+LAG(amount)
+OVER(
+PARTITION BY customer
+ORDER BY order_date
+)
+```
+
+Common uses:
+
+- Previous purchase
+- Previous salary
+- Previous login
+
+---
+
+# Common Interview Pattern
+
+Difference from previous row
+
+```sql
+SELECT
+customer,
+amount,
+previous_amount,
+amount - previous_amount AS difference
+FROM (
+    SELECT
+        customer,
+        amount,
+        LAG(amount)
+        OVER(
+            PARTITION BY customer
+            ORDER BY order_date
+        ) AS previous_amount
+    FROM orders
+)t;
+```
+
+---
+
+# Running Total
+
+```sql
+SUM(amount)
+OVER(
+PARTITION BY customer
+ORDER BY order_date
+)
+```
+
+---
+
+# When Do I Need a Subquery?
+
+## No Subquery
+
+When you're only displaying the window function.
+
+Example:
+
+```sql
+SELECT
+employee_name,
+AVG(salary)
+OVER(PARTITION BY department)
+FROM employees;
+```
+
+---
+
+## Subquery Required
+
+When filtering using a window function.
+
+Wrong:
+
+```sql
+SELECT *
+FROM employees
+WHERE salary_rank = 1;
+```
+
+Correct:
+
+```sql
+SELECT *
+FROM (
+    SELECT *,
+           DENSE_RANK() OVER(
+               PARTITION BY department
+               ORDER BY salary DESC
+           ) AS salary_rank
+    FROM employees
+)t
+WHERE salary_rank = 1;
+```
+
+---
+
+# Easy Rule to Remember
+
+✅ Display a window function
+
+→ No subquery
+
+✅ Filter on a window function
+
+→ Subquery or CTE
+
+---
+
+# GROUP BY vs Window Functions
+
+## GROUP BY
+
+- One row per group
+- Aggregates rows
+- Loses individual row details
+
+Example:
+
+```sql
+SELECT department,
+MAX(salary)
+FROM employees
+GROUP BY department;
+```
+
+---
+
+## Window Functions
+
+- Keep every row
+- Perform calculations across groups
+
+Example:
+
+```sql
+MAX(salary)
+OVER(PARTITION BY department)
+```
+
+---
+
+# Interview Framework
+
+Whenever you see a SQL question, ask yourself:
+
+### Step 1
+
+What calculations are required?
+
+---
+
+### Step 2
+
+Which SQL function solves each calculation?
+
+Examples:
+
+- Average → AVG()
+- Running Total → SUM()
+- Previous Row → LAG()
+- Latest Row → ROW_NUMBER()
+- Ranking → RANK() / DENSE_RANK()
+
+---
+
+### Step 3
+
+Am I only displaying the calculation?
+
+If yes → No subquery
+
+---
+
+### Step 4
+
+Am I filtering using the calculation?
+
+If yes → Use a subquery (or CTE)
+
+---
+
+# Questions Practiced
+
+- Department Average Salary
+- Department Total Salary
+- Highest Salary per Department
+- Lowest Salary per Department
+- Running Total
+- Previous Order Amount
+- Difference from Previous Order
+- Salary Ranking
+- Second Highest Salary
+- Top N Employees
+- Salary vs Department Average
+- Latest Order vs Average Order
+
+---
+
+# What's Next?
+
+Now that the fundamentals are complete, focus on solving interview-style problems involving multiple concepts.
+
+Upcoming topics:
+
+- JOIN + GROUP BY + Subqueries
+- Multi-table Analytics
+- LEAD()
+- FIRST_VALUE()
+- LAST_VALUE()
+- NTILE()
+- CUME_DIST()
+- Rolling Window Calculations
+- Gaps & Islands
+- Cohort Analysis
+- Retention Analysis
+- Funnel Analysis
+
+---
+
+## Key Takeaway
+
+> **Window Functions = Calculate without collapsing rows.**
+
+> **GROUP BY = Aggregate and collapse rows.**
+
+> **If you filter using a window function, use a subquery (or CTE).**
