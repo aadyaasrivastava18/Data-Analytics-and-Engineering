@@ -1,6 +1,6 @@
-# SQL Query Optimization - Module 1
+# SQL Query Optimisation 
 
-> Learn how the database executes queries, why some queries are slow, and how to think like a query optimizer instead of guessing fixes.
+> Learn how the database executes queries, why some queries are slow, and how to think like a query optimiser instead of guessing fixes.
 
 ---
 
@@ -10,7 +10,7 @@ Writing a correct SQL query is only the first step.
 
 In production systems with millions or billions of rows, the biggest challenge is writing queries that execute efficiently.
 
-This module introduces the fundamental concepts required to understand query performance and prepares you for SQL optimization interviews at companies like Google, Meta, Microsoft, Amazon, Uber, and Airbnb.
+This module introduces the fundamental concepts required to understand query performance and prepares you for SQL optimisation interviews at companies like Google, Meta, Microsoft, Amazon, Uber, and Airbnb.
 
 ---
 
@@ -390,3 +390,234 @@ In this module, you learned:
 - A systematic approach to debugging slow SQL queries.
 
 This module forms the foundation for understanding execution plans, indexing strategies, and advanced SQL optimization.
+
+---
+
+# Reading Execution Plans (`EXPLAIN`)
+
+`EXPLAIN` shows **how** the optimizer plans to execute a query.
+
+Example:
+
+```sql
+EXPLAIN
+SELECT *
+FROM employees
+WHERE employee_id = 100;
+```
+
+## Important Columns
+
+| Column  | Meaning                         |
+| ------- | ------------------------------- |
+| `table` | Table being accessed            |
+| `type`  | Access method used              |
+| `key`   | Index selected                  |
+| `rows`  | Estimated rows examined         |
+| `Extra` | Additional operations performed |
+
+Always inspect the execution plan before attempting to optimize a query.
+
+---
+
+# Access Types
+
+The `type` column in `EXPLAIN` indicates how efficiently the database accesses data.
+
+Best → Worst
+
+```text
+system → const → eq_ref → ref → range → index → ALL
+```
+
+| Type     | Description                              |
+| -------- | ---------------------------------------- |
+| `const`  | Primary Key / UNIQUE lookup              |
+| `eq_ref` | Join using a Primary or Unique Key       |
+| `ref`    | Equality lookup using a non-unique index |
+| `range`  | Reads a range of index values            |
+| `index`  | Scans the entire index                   |
+| `ALL`    | Full Table Scan                          |
+
+> **Note:** The optimizer chooses the access type with the lowest estimated cost, not necessarily the highest-ranked one.
+
+---
+
+# Composite Indexes
+
+A composite index stores multiple columns together.
+
+Example:
+
+```sql
+INDEX(country, city, department)
+```
+
+The data is logically ordered as:
+
+```text
+Country
+    ↓
+City
+    ↓
+Department
+```
+
+## Leftmost Prefix Rule
+
+For:
+
+```sql
+INDEX(A, B, C)
+```
+
+Efficient:
+
+```sql
+WHERE A = ...
+
+WHERE A = ...
+AND B = ...
+
+WHERE A = ...
+AND B = ...
+AND C = ...
+```
+
+Partial Usage:
+
+```sql
+WHERE A = ...
+AND C = ...
+```
+
+Only column **A** is efficiently used.
+
+Not Efficient:
+
+```sql
+WHERE B = ...
+
+WHERE C = ...
+```
+
+---
+
+# Covering Index
+
+A covering index contains every column required to execute a query.
+
+This includes columns used in:
+
+* `SELECT`
+* `WHERE`
+* `ORDER BY`
+* `GROUP BY`
+
+Example:
+
+```sql
+INDEX(first_name, salary)
+
+SELECT salary
+FROM employees
+WHERE first_name = 'John';
+```
+
+Since both required columns exist in the index, the database can answer the query without reading the table.
+
+> **Rule:** A covering index avoids table lookups.
+
+---
+
+# Join Optimization
+
+The optimizer chooses different join algorithms depending on table size, indexes, and estimated cost.
+
+| Situation                               | Preferred Join         |
+| --------------------------------------- | ---------------------- |
+| Small outer table + indexed inner table | Index Nested Loop Join |
+| No useful index                         | Hash Join              |
+| Both inputs already sorted              | Merge Join             |
+
+Remember:
+
+> The optimizer selects the join algorithm with the lowest estimated cost.
+
+---
+
+# ORDER BY Optimization
+
+If an index already stores rows in the required order, the optimizer can avoid sorting.
+
+Example:
+
+```sql
+INDEX(salary)
+
+SELECT salary
+FROM employees
+ORDER BY salary;
+```
+
+The optimizer can read the index directly.
+
+However,
+
+```sql
+SELECT *
+FROM employees
+ORDER BY salary;
+```
+
+may still require sorting because additional table lookups could be more expensive than scanning and sorting.
+
+---
+
+## Using filesort
+
+`EXPLAIN` may show:
+
+```text
+Using filesort
+```
+
+This means the optimizer performed an explicit sort because it could not satisfy the requested ordering using an index.
+
+> `Using filesort` does **not** necessarily mean sorting on disk.
+
+---
+
+# GROUP BY Optimization
+
+Queries using `GROUP BY`, `DISTINCT`, or complex aggregations may require an intermediate structure during execution.
+
+`EXPLAIN` may show:
+
+```text
+Using temporary
+```
+
+This indicates that the optimizer created a temporary structure while processing the query.
+
+Indexes can often reduce or eliminate the need for temporary structures when grouping or ordering matches the index order.
+
+---
+
+# Additional Interview Takeaways
+
+* The optimizer chooses the **lowest estimated cost**, not simply an available index.
+* `rows` in `EXPLAIN` is an estimate, not an exact count.
+* `key = NULL` means no index was chosen for the execution plan.
+* Composite indexes follow the **Leftmost Prefix Rule**.
+* A covering index avoids reading the base table.
+* `Using filesort` indicates an explicit sort operation.
+* `Using temporary` indicates an intermediate structure was created during execution.
+* Always explain optimization decisions using the optimizer's estimated cost rather than assuming an index will always be used.
+
+
+
+
+
+
+
