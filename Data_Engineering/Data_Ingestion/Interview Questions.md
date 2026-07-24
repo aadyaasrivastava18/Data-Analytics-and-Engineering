@@ -217,3 +217,49 @@ The ingestion strategy depends on:
 
 **Source Systems → Ingestion Pipeline → Landing Zone / Data Lake → Data Warehouse → Analytics, Reporting, Machine Learning, or Business Applications**
 
+---
+# 📄 Data_Ingestion_Interview_Questions_2.md
+
+# Data Ingestion – Advanced Interview Questions
+
+---
+
+## 26. A daily Batch Ingestion pipeline runs at midnight. The CEO wants dashboards to refresh every 5 minutes. How would you redesign the architecture?
+
+**Answer**
+
+Start by understanding which datasets actually require a 5-minute refresh. Rather than replacing the entire Batch pipeline, design a hybrid architecture where business-critical datasets use Streaming Ingestion while non-time-sensitive workloads continue using Batch Ingestion. This balances latency requirements with infrastructure cost and operational complexity.
+
+---
+
+## 27. The CEO insists that every dashboard must refresh every 5 minutes. Would you convert the entire platform to Streaming?
+
+**Answer**
+
+Not immediately. First, define latency SLAs for each dataset by working with business stakeholders. Many datasets, such as payroll, finance, or compliance reports, do not require real-time updates. Converting every pipeline to Streaming increases infrastructure cost, monitoring complexity, and operational overhead. A hybrid architecture usually provides the best balance between business value and engineering cost.
+
+---
+
+## 28. A 100 GB CSV Batch Ingestion job fails after loading 80 GB. What problems can this create?
+
+**Answer**
+
+A partial load can result in incomplete reports, inconsistent analytics, duplicate records after retries, and corrupted business metrics. Users may make incorrect decisions if the Data Warehouse contains partially loaded data.
+
+---
+
+## 29. How would you design the pipeline so it doesn't restart from 0 GB after a failure?
+
+**Answer**
+
+Implement checkpointing so the pipeline periodically records its progress. If a failure occurs, the pipeline resumes from the last successful checkpoint instead of restarting the entire ingestion job, reducing recovery time and compute cost.
+
+---
+
+## 30. How would you ensure the Data Warehouse never contains partial or corrupted data?
+
+**Answer**
+
+Load the data into a staging table first, perform validation and quality checks, and only commit the data to the production Data Warehouse after the entire load succeeds. If validation fails, roll back the transaction so incomplete data is never exposed to downstream users.
+
+---
