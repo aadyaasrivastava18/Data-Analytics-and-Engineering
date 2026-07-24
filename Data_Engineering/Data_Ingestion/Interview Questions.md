@@ -1,4 +1,4 @@
-# Message Queues – Interview Questions
+# Interview Questions
 
 ---
 
