@@ -107,16 +107,113 @@ Kafka provides full control over infrastructure and is suitable for custom strea
 Application → Producer → Kafka Topic → Partition → Consumer Group → Consumer → Offset Commit → Data Lake/Data Warehouse → Analytics Dashboard
 
 ---
+# 📄 Data_Ingestion_Interview_Questions.md
 
-## Quick Revision
+# Data Ingestion – Interview Questions
 
-* Producer vs Consumer
-* Producer–Consumer mismatch
-* Message Queue
-* Consumer Group
-* Partitions
-* Rebalancing
-* Offsets
-* Delivery Guarantees
-* Kafka vs Pub/Sub
-* End-to-End Architecture
+---
+
+## 14. What is Data Ingestion?
+
+**Answer**
+
+Data Ingestion is the process of collecting data from one or more source systems and moving it into a central storage or processing platform, such as a Data Lake or Data Warehouse. It enables organisations to consolidate data for analytics, reporting, machine learning, and operational workflows.
+
+---
+
+## 15. How would you ingest data from multiple sources into a single Data Warehouse?
+
+**Answer**
+
+Design a dedicated ingestion pipeline for each source based on how the data is generated. Load the data into a common landing zone or Data Lake before making it available in the Data Warehouse. Choose the ingestion strategy according to the characteristics of each source (Batch, Streaming, or CDC).
+
+---
+
+## 16. How do you decide between Batch and Streaming Ingestion?
+
+**Answer**
+
+The choice depends on business latency requirements.
+
+* **Batch Ingestion** is suitable when data can be processed periodically (hourly, daily, weekly).
+* **Streaming Ingestion** is used when data must be available with minimal latency for real-time analytics, monitoring, or operational decisions.
+
+---
+
+## 17. Your application generates millions of events every second. Would you choose Batch or Streaming?
+
+**Answer**
+
+Streaming Ingestion is the preferred choice because it processes events continuously with low latency. Batch processing would delay data availability, slowing dashboards, monitoring, fraud detection, and other real-time business operations.
+
+---
+
+## 18. You need to migrate 10 TB of historical data into a new Data Warehouse. After migration, only new transactions need to be synchronised. How would you design the ingestion pipeline?
+
+**Answer**
+
+Perform a one-time Batch Ingestion to migrate the historical dataset. After the initial load, switch to incremental ingestion using CDC so that only new or modified records are synchronised, reducing unnecessary data movement and processing costs.
+
+---
+
+## 19. A database contains 500 million records, but only 2,000 change each day. Why is Batch Ingestion a poor choice?
+
+**Answer**
+
+Batch Ingestion would repeatedly scan and process the entire dataset to capture a very small number of changes. This wastes compute resources, network bandwidth, storage I/O, and increases ingestion time.
+
+---
+
+## 20. Why is Change Data Capture (CDC) the preferred solution?
+
+**Answer**
+
+CDC captures only inserts, updates, and deletes from the source database. Instead of reprocessing the full dataset, it ingests only changed records, making the pipeline significantly more efficient and scalable.
+
+---
+
+## 21. How does CDC reduce cost and improve performance?
+
+**Answer**
+
+By processing only changed records, CDC reduces data movement, CPU utilisation, storage I/O, and network traffic. This lowers infrastructure costs while keeping downstream systems synchronised with minimal latency.
+
+---
+
+## 22. Can CDC replace Batch Ingestion?
+
+**Answer**
+
+No. Batch Ingestion is still required for initial historical loads and large-scale migrations. CDC complements Batch by efficiently synchronising incremental changes after the initial load.
+
+---
+
+## 23. Does Data Ingestion always transform data?
+
+**Answer**
+
+No. Data Ingestion focuses on collecting and moving data from source systems to a destination. Data transformation is typically performed later as part of ETL or ELT pipelines.
+
+---
+
+## 24. What factors influence the choice of an ingestion strategy?
+
+**Answer**
+
+The ingestion strategy depends on:
+
+* Business latency requirements
+* Data volume
+* Frequency of data changes
+* Source system capabilities
+* Cost and infrastructure constraints
+* Reliability and scalability requirements
+
+---
+
+## 25. Explain an end-to-end Data Ingestion pipeline.
+
+**Answer**
+
+**Source Systems → Ingestion Pipeline → Landing Zone / Data Lake → Data Warehouse → Analytics, Reporting, Machine Learning, or Business Applications**
+
