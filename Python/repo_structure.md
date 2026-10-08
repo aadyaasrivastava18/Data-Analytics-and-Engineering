@@ -7,4 +7,4 @@ Python/
 ├── 03_pandas/
 ├── 04_eda/
 ├── 05_etl/
-└── 06_projects/
+
